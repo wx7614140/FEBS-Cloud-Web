@@ -47,7 +47,7 @@ html {
 }
 
 .no-padding {
-  padding: 0px !important;
+  padding: 0 !important;
 }
 
 .padding-content {
@@ -228,15 +228,22 @@ aside {
 
 }
 .el-button {
+  font-weight: 500;
   margin-left: 0 !important;
   margin-right: 10px;
 }
 .el-submenu__title {
+  font-weight: 400;
+  font-size: 14px;
+  color: rgb(255, 255, 255) !important;
   i {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgb(255, 255, 255) ;
     margin-right: 10px !important;
     margin-left: 10px;
   }
+}
+li.el-menu-item {
+  color: rgb(255, 255, 255) !important;
 }
 
 .el-tooltip__popper {
@@ -245,4 +252,52 @@ aside {
 }
 .no-perm {
   margin-top: -6px
+}
+.el-input__inner {
+  height: 38px;
+  line-height: 38px;
+}
+.el-menu-item.is-active {
+  background-color: #1f2328 !important;
+}
+.el-button {
+  padding: 10px 20px;
+}
+.el-table {
+  th {
+    padding: 7px 0;
+  }
+}
+.el-table thead {
+  color: #606266;
+}
+.el-table--group, .el-table--border {
+  border: none;
+}
+.el-table th.is-leaf, .el-table td {
+  border-top: 1px solid #dfe6ec;
+}
+.el-table__empty-block {
+  border-left: 1px solid #dfe6ec;
+  border-top: 1px solid #dfe6ec;
+}
+.el-table th.is-leaf, .el-table td {
+  border-bottom: none;
+}
+.el-table th.is-leaf:first-child, .el-table td:first-child {
+  border-left: 1px solid #dfe6ec;
+}
+.el-input-number {
+  line-height: 36px;
+}
+.menu-wrapper.nest-menu .el-submenu__title {
+  padding-left: 63px !important;
+}
+.vue-treeselect__placeholder, .vue-treeselect__single-value {
+  line-height: 40px !important;
+  height: 40px !important;
+  padding-left: 10px !important;
+}
+.vue-treeselect__single-value {
+  color: #606266 !important;
 }

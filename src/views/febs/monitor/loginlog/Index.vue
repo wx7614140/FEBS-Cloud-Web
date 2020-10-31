@@ -10,10 +10,10 @@
         class="filter-item search-item date-range-item"
         type="daterange"
       />
-      <el-button class="filter-item" @click="search">
+      <el-button class="filter-item" type="primary" @click="search">
         {{ $t('table.search') }}
       </el-button>
-      <el-button class="filter-item" @click="reset">
+      <el-button class="filter-item" type="success" @click="reset">
         {{ $t('table.reset') }}
       </el-button>
       <el-dropdown v-has-any-permission="['loginlog:delete','loginlog:export']" trigger="click" class="filter-item">
@@ -77,7 +77,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="fetch" />
+    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="search" />
   </div>
 </template>
 <script>
@@ -162,6 +162,7 @@ export default {
       this.$refs.table.clearSelection()
     },
     delete(logIds) {
+      this.loading = true
       this.$delete(`system/loginLog/${logIds}`).then(() => {
         this.$message({
           message: this.$t('tips.deleteSuccess'),

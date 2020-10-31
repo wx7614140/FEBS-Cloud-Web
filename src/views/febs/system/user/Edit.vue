@@ -29,10 +29,11 @@
           :options="depts"
           :clear-value-text="$t('common.clear')"
           placeholder=" "
+          style="width:100%"
         />
       </el-form-item>
       <el-form-item :label="$t('table.user.role')" prop="roleId">
-        <el-select v-model="user.roleId" multiple value="" placeholder="">
+        <el-select v-model="user.roleId" multiple value="" placeholder="" style="width:100%">
           <el-option
             v-for="item in roles"
             :key="item.roleId"
@@ -41,8 +42,21 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item :label="$t('table.user.dataPermission')" prop="deptIds">
+        <el-tree
+          ref="deptTree"
+          :data="deptTree"
+          :check-strictly="true"
+          :default-checked-keys="user.deptIdsArr"
+          show-checkbox
+          accordion
+          node-key="id"
+          highlight-current
+          style="border: 1px solid #DCDFE6;border-radius: 3px;padding: 6px;"
+        />
+      </el-form-item>
       <el-form-item :label="$t('table.user.sex')" prop="sex">
-        <el-select v-model="user.sex" value="" placeholder="">
+        <el-select v-model="user.sex" value="" placeholder="" style="width:100%">
           <el-option value="0" :label="$t('common.sex.male') " />
           <el-option value="1" :label="$t('common.sex.female') " />
           <el-option value="2" :label="$t('common.sex.secret') " />
@@ -56,10 +70,10 @@
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
-      <el-button type="warning" plain @click="isVisible = false">
+      <el-button type="warning" plain :loading="buttonLoading" @click="isVisible = false">
         {{ $t('common.cancel') }}
       </el-button>
-      <el-button type="primary" plain @click="submitForm">
+      <el-button type="primary" plain :loading="buttonLoading" @click="submitForm">
         {{ $t('common.confirm') }}
       </el-button>
     </div>
@@ -85,11 +99,14 @@ export default {
   },
   data() {
     return {
+      initFlag: false,
       user: this.initUser(),
+      buttonLoading: false,
       screenWidth: 0,
       width: this.initWidth(),
       depts: [],
       roles: [],
+      deptTree: [],
       rules: {
         username: [
           { required: true, message: this.$t('rules.require'), trigger: 'blur' },
@@ -153,7 +170,9 @@ export default {
         sex: '',
         status: '1',
         deptId: null,
-        roleId: []
+        roleId: [],
+        deptIds: '',
+        deptIdsArr: []
       }
     },
     initWidth() {
@@ -169,6 +188,7 @@ export default {
     initDept() {
       this.$get('system/dept').then((r) => {
         this.depts = r.data.data.rows
+        this.deptTree = this.depts
       }).catch((error) => {
         console.error(error)
         this.$message({
@@ -176,6 +196,9 @@ export default {
           type: 'error'
         })
       })
+    },
+    resetDeptTree() {
+      this.$refs.deptTree.setCheckedKeys([])
     },
     initRoles() {
       this.$get('system/role/options').then((r) => {
@@ -190,6 +213,7 @@ export default {
     },
     setUser(val) {
       this.user = { ...val }
+      this.user.deptIds && (this.user.deptIdsArr = this.user.deptIds.split(','))
     },
     close() {
       this.$emit('close')
@@ -197,10 +221,13 @@ export default {
     submitForm() {
       this.$refs.form.validate((valid) => {
         if (valid) {
+          this.buttonLoading = true
+          this.user.roleId = this.user.roleId.join(',')
+          this.user.deptIds = this.$refs.deptTree.getCheckedKeys()
           if (!this.user.userId) {
             // create
-            this.user.roleId = this.user.roleId.join(',')
             this.$post('system/user', { ...this.user }).then(() => {
+              this.buttonLoading = false
               this.isVisible = false
               this.$message({
                 message: this.$t('tips.createSuccess'),
@@ -210,9 +237,9 @@ export default {
             })
           } else {
             // update
-            this.user.roleId = this.user.roleId.join(',')
             this.user.createTime = this.user.modifyTime = this.user.lastLoginTime = null
             this.$put('system/user', { ...this.user }).then(() => {
+              this.buttonLoading = false
               this.isVisible = false
               this.$message({
                 message: this.$t('tips.updateSuccess'),
@@ -231,6 +258,7 @@ export default {
       this.$refs.form.clearValidate()
       this.$refs.form.resetFields()
       this.user = this.initUser()
+      this.resetDeptTree()
     }
   }
 }

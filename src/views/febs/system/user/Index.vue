@@ -11,10 +11,10 @@
         class="filter-item search-item date-range-item"
         type="daterange"
       />
-      <el-button class="filter-item" @click="search">
+      <el-button class="filter-item" type="primary" @click="search">
         {{ $t('table.search') }}
       </el-button>
-      <el-button class="filter-item" @click="reset">
+      <el-button class="filter-item" type="success" @click="reset">
         {{ $t('table.reset') }}
       </el-button>
       <el-dropdown v-has-any-permission="['user:add','user:delete','user:reset','user:export']" trigger="click" class="filter-item">
@@ -81,7 +81,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column :label="$t('table.user.createTime')" align="center" min-width="180px" sortable="custom">
+      <el-table-column :label="$t('table.user.createTime')" prop="createTime" align="center" min-width="180px" sortable="custom">
         <template slot-scope="scope">
           <span>{{ scope.row.createTime }}</span>
         </template>
@@ -97,7 +97,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="fetch" />
+    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="search" />
     <user-edit
       ref="edit"
       :dialog-visible="dialog.isVisible"
@@ -292,6 +292,7 @@ export default {
       this.$refs.table.clearSelection()
     },
     delete(userIds) {
+      this.loading = true
       this.$delete(`system/user/${userIds}`).then(() => {
         this.$message({
           message: this.$t('tips.deleteSuccess'),
@@ -310,9 +311,12 @@ export default {
         roleId = row.roleId.split(',')
         row.roleId = roleId
       }
-      this.$refs.edit.setUser(row)
-      this.dialog.title = this.$t('common.edit')
-      this.dialog.isVisible = true
+      this.$get(`system/user/${row.userId}`).then((r) => {
+        row.deptIds = r.data.data
+        this.$refs.edit.setUser(row)
+        this.dialog.title = this.$t('common.edit')
+        this.dialog.isVisible = true
+      })
     },
     fetch(params = {}) {
       params.pageSize = this.pagination.size

@@ -6,7 +6,7 @@
       </el-button>
       <el-upload
         class="upload"
-        action="system/eximport/import"
+        :action="uploadAction"
         :headers="headers"
         list-type="picture"
         :show-file-list="false"
@@ -53,7 +53,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="fetch" />
+    <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="search" />
     <result
       :dialog-visible="dialogVisible"
       :data="data"
@@ -76,6 +76,7 @@ export default {
   components: { Pagination, Result },
   data() {
     return {
+      uploadAction: `${process.env.VUE_APP_BASE_API}system/eximport/import`,
       dialogVisible: false,
       tableKey: 0,
       loading: false,

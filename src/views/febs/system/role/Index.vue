@@ -5,10 +5,10 @@
         <div class="app-container">
           <div class="filter-container">
             <el-input v-model="queryParams.roleName" :placeholder="$t('table.role.roleName')" class="filter-item search-item" />
-            <el-button class="filter-item" @click="search">
+            <el-button class="filter-item" type="primary" @click="search">
               {{ $t('table.search') }}
             </el-button>
-            <el-button class="filter-item" @click="reset">
+            <el-button class="filter-item" type="success" @click="reset">
               {{ $t('table.reset') }}
             </el-button>
             <el-dropdown v-has-any-permission="['role:add','role:delete','role:export']" trigger="click" class="filter-item">
@@ -59,7 +59,7 @@
               </template>
             </el-table-column>
           </el-table>
-          <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="fetch" />
+          <pagination v-show="total>0" :total="total" :page.sync="pagination.num" :limit.sync="pagination.size" @pagination="search" />
         </div>
       </el-col>
       <el-col :xs="24" :sm="10">
@@ -92,7 +92,7 @@
         <el-card class="box-card">
           <el-row>
             <el-col :span="24" style="text-align: right">
-              <el-button type="primary" plain @click="submit">{{ role.roleId === '' ? this.$t('common.add') : this.$t('common.edit') }}</el-button>
+              <el-button type="primary" :loading="buttonLoading" plain @click="submit">{{ role.roleId === '' ? this.$t('common.add') : this.$t('common.edit') }}</el-button>
             </el-col>
           </el-row>
         </el-card>
@@ -110,6 +110,7 @@ export default {
     return {
       tableKey: 0,
       loading: false,
+      buttonLoading: false,
       list: null,
       selection: [],
       total: 0,
@@ -178,6 +179,8 @@ export default {
       this.role = { ...row }
       if (this.role.menuIds) {
         this.$refs.permsTree.setCheckedKeys(this.role.menuIds.split(','))
+      } else {
+        this.$refs.permsTree.setCheckedKeys([])
       }
     },
     singleDelete(row) {
@@ -207,6 +210,7 @@ export default {
       })
     },
     delete(roleIds) {
+      this.loading = true
       this.$delete(`system/role/${roleIds}`).then(() => {
         this.$message({
           message: this.$t('tips.deleteSuccess'),
@@ -218,10 +222,12 @@ export default {
     submit() {
       this.$refs.form.validate((valid) => {
         if (valid) {
+          this.buttonLoading = true
           if (this.role.roleId) {
             this.role.menuIds = this.$refs.permsTree.getCheckedKeys().join(',')
             this.role.createTime = this.role.modifyTime = null
             this.$put('system/role', { ...this.role }).then(() => {
+              this.buttonLoading = false
               this.$message({
                 message: this.$t('tips.updateSuccess'),
                 type: 'success'
@@ -231,6 +237,7 @@ export default {
           } else {
             this.role.menuIds = this.$refs.permsTree.getCheckedKeys().join(',')
             this.$post('system/role', { ...this.role }).then(() => {
+              this.buttonLoading = false
               this.$message({
                 message: this.$t('tips.createSuccess'),
                 type: 'success'
@@ -245,6 +252,10 @@ export default {
     },
     add() {
       this.resetForm()
+      this.$message({
+        message: this.$t('tips.createTips'),
+        type: 'info'
+      })
     },
     sortChange(val) {
       this.sort.field = val.prop
@@ -265,6 +276,7 @@ export default {
       this.$refs.permsTree.setCheckedKeys([])
     },
     search() {
+      this.resetForm()
       this.fetch({
         ...this.queryParams,
         ...this.sort

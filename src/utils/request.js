@@ -1,25 +1,37 @@
 import axios from 'axios'
-import { Message } from 'element-ui'
+import { Message, MessageBox } from 'element-ui'
+import { authorizationValue } from '@/settings'
 import store from '@/store/index'
+import router from '@/router'
 import { getToken, getRefreshToken, getExpireTime } from '@/utils/auth'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
+// 请求超时时间，10s
+const requestTimeOut = 10 * 1000
+const success = 200
+// 更换令牌的时间区间
+const checkRegion = 5 * 60 * 1000
+// 提示信息显示时长
+const messageDuration = 5 * 1000
+
+// 系统全局请求对象
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 10000,
+  timeout: requestTimeOut,
   responseType: 'json',
   validateStatus(status) {
-    return status === 200
+    return status === success
   }
 })
 
+// 系统令牌刷新请求对象
 const refresh_service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API,
-  timeout: 10000,
+  timeout: requestTimeOut,
   responseType: 'json',
   validateStatus(status) {
-    return status === 200
+    return status === success
   }
 })
 
@@ -31,7 +43,7 @@ service.interceptors.request.use(
       if (expireTime) {
         const left = expireTime - new Date().getTime()
         const refreshToken = getRefreshToken()
-        if (left < 5 * 60 * 1000 && refreshToken) {
+        if (left < checkRegion && refreshToken) {
           _config = queryRefreshToken(_config, refreshToken)
         } else {
           if (getToken()) {
@@ -59,31 +71,39 @@ service.interceptors.response.use((config) => {
     switch (error.response.status) {
       case 404:
         Message({
-          message: '很抱歉，资源未找到' || 'Error',
+          message: '很抱歉，资源未找到',
           type: 'error',
-          duration: 5 * 1000
+          duration: messageDuration
         })
         break
       case 403:
         Message({
-          message: '很抱歉，您暂无该操作权限' || 'Error',
+          message: '很抱歉，您暂无该操作权限',
           type: 'error',
-          duration: 5 * 1000
+          duration: messageDuration
         })
         break
       case 401:
         Message({
-          message: '很抱歉，认证已失效，请重新登录' || 'Error',
+          message: '很抱歉，认证已失效，请重新登录',
           type: 'error',
-          duration: 5 * 1000
+          duration: messageDuration
         })
         break
       default:
-        if (errorMessage) {
+        if (errorMessage === 'refresh token无效') {
+          MessageBox.alert('登录已过期，请重新登录', '温馨提示', {
+            confirmButtonText: '确定',
+            showClose: false,
+            callback: action => {
+              router.push('/login')
+            }
+          })
+        } else {
           Message({
             message: errorMessage,
             type: 'error',
-            duration: 5 * 1000
+            duration: messageDuration
           })
         }
         break
@@ -100,7 +120,7 @@ const request = {
         return tansParams(params)
       }],
       headers: {
-        'Authorization': 'Basic ZmViczoxMjM0NTY='
+        'Authorization': authorizationValue
       }
     })
   },
@@ -111,7 +131,7 @@ const request = {
         return tansParams(params)
       }],
       headers: {
-        'Authorization': 'Basic ZmViczoxMjM0NTY='
+        'Authorization': authorizationValue
       }
     })
   },
@@ -142,6 +162,7 @@ const request = {
     } else {
       _params = '?'
       for (const key in params) {
+        // eslint-disable-next-line no-prototype-builtins
         if (params.hasOwnProperty(key) && params[key] !== null) {
           _params += `${key}=${params[key]}&`
         }
@@ -156,6 +177,7 @@ const request = {
     } else {
       _params = '?'
       for (const key in params) {
+        // eslint-disable-next-line no-prototype-builtins
         if (params.hasOwnProperty(key) && params[key] !== null) {
           _params += `${key}=${params[key]}&`
         }
@@ -192,7 +214,7 @@ const request = {
       Message({
         message: '下载失败',
         type: 'error',
-        duration: 5 * 1000
+        duration: messageDuration
       })
     })
   },
@@ -219,7 +241,7 @@ async function queryRefreshToken(config, refreshToken) {
   const result = await request.refresh('auth/oauth/token', {
     refresh_token: refreshToken
   })
-  if (result.status === 200) {
+  if (result.status === success) {
     saveData(result.data)
     config.headers['Authorization'] = 'bearer ' + getToken()
   }
